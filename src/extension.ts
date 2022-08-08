@@ -12,11 +12,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	vscode.window.registerTreeDataProvider('projectManagerTreeView', treeDataProvider);
 
-	vscode.commands.registerCommand('vscode-project-manageraddProject', () => {
+	vscode.commands.registerCommand('vscode-project-manager.addProject', () => {
 		createProjectEntry();
 	});
 
-	vscode.commands.registerCommand('vscode-project-managereditEntry', (item) => {
+	vscode.commands.registerCommand('vscode-project-manager.editEntry', (item) => {
 		
 		if(item.project === undefined && item.category !== undefined){
 			// edit category
@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	});
 
-	vscode.commands.registerCommand('vscode-project-managerdeleteEntry', (item) => {
+	vscode.commands.registerCommand('vscode-project-manager.deleteEntry', (item) => {
 		
 		vscode.window.showInformationMessage("You realy want to delete this?", "Yes", "No").then(answer => {
 			if (answer === "Yes") {
@@ -45,11 +45,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	});
 
-	vscode.commands.registerCommand('vscode-project-manageraddCategory', () => {
+	vscode.commands.registerCommand('vscode-project-manager.addCategory', () => {
 		createCategoryEntry();
 	});
 
-	vscode.commands.registerCommand('vscode-project-manageropenInNewWindow', (item) => {
+	vscode.commands.registerCommand('vscode-project-manager.openInNewWindow', (item) => {
 		
 		let projectPathUri = vscode.Uri.file(item.project._path);
 		vscode.commands.executeCommand('vscode.openFolder', projectPathUri, {
@@ -58,7 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	});
 
-	vscode.commands.registerCommand('vscode-project-manageropenInWindow', (project) => {
+	vscode.commands.registerCommand('vscode-project-manager.openInWindow', (project) => {
 		
 		let projectObj = Project.getOneById(project);
 
@@ -331,7 +331,7 @@ class TreeItem extends vscode.TreeItem {
 			this.iconPath = new vscode.ThemeIcon("folder");
 			this.contextValue = 'TreeItemProject';
 			this.command = {
-				command: 'vscode-project-manageropenInWindow',
+				command: 'vscode-project-manager.openInWindow',
 				title: 'openInWindow',
 				arguments: [this.project?._id]
 			};
