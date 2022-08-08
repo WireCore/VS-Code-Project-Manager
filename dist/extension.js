@@ -1,1 +1,555 @@
-(()=>{"use strict";var e={496:e=>{e.exports=require("vscode")},147:e=>{e.exports=require("fs")},17:e=>{e.exports=require("path")}},t={};function r(o){var i=t[o];if(void 0!==i)return i.exports;var n=t[o]={exports:{}};return e[o](n,n.exports,r),n.exports}var o={};(()=>{var e=o;Object.defineProperty(e,"__esModule",{value:!0}),e.deactivate=e.activate=void 0;const t=r(496),i=r(147),n=r(17);let a,s;e.activate=function(e){a=e,s=new c,t.window.registerTreeDataProvider("projectManagerTreeView",s),t.commands.registerCommand("projectmanager.addProject",(()=>{!async function(){if(void 0!==t.workspace.workspaceFolders&&t.workspace.workspaceFolders?.length>0){const e=await t.window.showInputBox({placeHolder:"Name",prompt:"Please enter a name for the project that is shown in the sidebar"});if(void 0!==e){if(""===e)return void t.window.showErrorMessage("A name for the project is required.");let r=g.getTreeStrings(),o=["No one"];r.forEach((function(e){o.push(e._string)}));const i=await t.window.showQuickPick(o,{title:"Enter a category name or leave it empty for no category"});let n=0;r.forEach((function(e){e._string===i&&(n=e._catId)}));let a=Array();t.workspace.workspaceFolders?.forEach((function(e){a.push(e.uri.fsPath.toString())}));let c=a[0];new d(c,e,n).save(),s.refresh()}}else t.window.showErrorMessage("One folder must been added to current workspace to save it.")}()})),t.commands.registerCommand("projectmanager.editEntry",(e=>{void 0===e.project&&void 0!==e.category?async function(e){let r=g.getOneById(e);if(null!==r){const o=await t.window.showInputBox({placeHolder:"Name",prompt:"Please enter a name for the category that is shown in the sidebar",value:r?._name});if(void 0!==o){if(""===o)return void t.window.showErrorMessage("A name for the category is required.");let i=g.getTreeStrings(),n=["No one"];i.forEach((function(t){t._catId!==e&&n.push(t._string)}));const a=await t.window.showQuickPick(n,{title:"Select a parent category or No one for a root category"});let c=0;i.forEach((function(e){e._string===a&&(c=e._catId)}));let l=new g(o,c);l._id=r._id,l.save(),s.refresh()}}}(e.category._id):void 0!==e.project&&void 0===e.category&&async function(e){let r=d.getOneById(e);if(null!==r){const e=await t.window.showInputBox({placeHolder:"Name",prompt:"Please enter a name for the project that is shown in the sidebar",value:r._name});if(void 0!==e){if(""===e)return void t.window.showErrorMessage("A name for the project is required.");let o=g.getTreeStrings(),i=["No one"];o.forEach((function(e){i.push(e._string)}));const n=await t.window.showQuickPick(i,{title:"Enter a category name or leave it empty for no category"});let a=0;o.forEach((function(e){e._string===n&&(a=e._catId)}));let c=Array();t.workspace.workspaceFolders?.forEach((function(e){c.push(e.uri.fsPath.toString())}));let l=c[0],h=new d(l,e,a);h._id=r._id,h.save(),s.refresh()}}}(e.project._id)})),t.commands.registerCommand("projectmanager.deleteEntry",(e=>{t.window.showInformationMessage("You realy want to delete this?","Yes","No").then((t=>{"Yes"===t&&(void 0===e.project&&void 0!==e.category?g.deleteById(e.category._id):void 0!==e.project&&void 0===e.category&&d.deleteById(e.project._id),s.refresh())}))})),t.commands.registerCommand("projectmanager.addCategory",(()=>{!async function(){const e=await t.window.showInputBox({placeHolder:"Name",prompt:"Please enter a name for the category that is shown in the sidebar"});if(void 0!==e){if(""===e)return void t.window.showErrorMessage("A name for the category is required.");let r=g.getTreeStrings(),o=["No one"];r.forEach((function(e){o.push(e._string)}));const i=await t.window.showQuickPick(o,{title:"Select a parent category or No one for a root category"});let n=0;r.forEach((function(e){e._string===i&&(n=e._catId)})),new g(e,n).save(),s.refresh()}}()})),t.commands.registerCommand("projectmanager.openInNewWindow",(e=>{let r=t.Uri.file(e.project._path);t.commands.executeCommand("vscode.openFolder",r,{forceNewWindow:!0})})),t.commands.registerCommand("projectmanager.openInWindow",(e=>{let r=d.getOneById(e);if(null!==r){let e=t.Uri.file(r._path);t.commands.executeCommand("vscode.openFolder",e)}}))},e.deactivate=function(){};class c{constructor(){this._onDidChangeTreeData=new t.EventEmitter,this.onDidChangeTreeData=this._onDidChangeTreeData.event,this.data=g.getTreeItemsWithProjects()}refresh(){this.data=g.getTreeItemsWithProjects(),this._onDidChangeTreeData.fire()}getTreeItem(e){return e}getChildren(e){return void 0===e?this.data:e.children}}class l extends t.TreeItem{constructor(e,r,o,i){super(e,void 0===r?t.TreeItemCollapsibleState.None:t.TreeItemCollapsibleState.Expanded),this.children=r,this.project=o,this.category=i,void 0===this.project?(this.iconPath=new t.ThemeIcon("layers"),this.contextValue="TreeItemCategory"):(this.iconPath=new t.ThemeIcon("folder"),this.contextValue="TreeItemProject",this.command={command:"projectmanager.openInWindow",title:"openInWindow",arguments:[this.project?._id]})}}class d{constructor(e,t,r=0){this._id=this.getNextId(),this._path=e,this._name=t,this._categoryId=r}getNextId(){let e=0;return d.getAll().forEach((function(t){t._id>e&&(e=t._id)})),e+1}save(){d.checkFolderandFiles();let e=d.getAll();for(let t=0;t<e.length;t++)this._id===e[t]._id&&e.splice(t,1);e.push(this),i.writeFileSync(n.join(a.globalStorageUri.fsPath.toString(),"projects.json"),JSON.stringify(e))}static deleteById(e){d.checkFolderandFiles();let t=d.getAll();for(let r=0;r<t.length;r++)t[r]._id===e&&t.splice(r,1);i.writeFileSync(n.join(a.globalStorageUri.fsPath.toString(),"projects.json"),JSON.stringify(t))}static getOneById(e){let t=d.getAll(),r=null;return t.forEach((function(t){t._id===e&&(r=t)})),r}static getAllByCategoryId(e){let t=d.getAll(),r=[];return t.forEach((function(t){t._categoryId===e&&r.push(t)})),r}static getAll(){return d.checkFolderandFiles(),JSON.parse(i.readFileSync(n.join(a.globalStorageUri.fsPath.toString(),"projects.json")).toString())}static checkFolderandFiles(){i.existsSync(a.globalStorageUri.fsPath.toString())||i.mkdirSync(a.globalStorageUri.fsPath.toString()),i.existsSync(n.join(a.globalStorageUri.fsPath.toString(),"projects.json"))||i.writeFileSync(n.join(a.globalStorageUri.fsPath.toString(),"projects.json"),JSON.stringify([]))}}class g{constructor(e,t){this._id=this.getNextId(),this._parentId=t,this._name=e,this.children=[]}save(){g.checkFolderandFiles();let e=g.getAll();for(let t=0;t<e.length;t++)this._id===e[t]._id&&e.splice(t,1);e.push(this),i.writeFileSync(n.join(a.globalStorageUri.fsPath.toString(),"categories.json"),JSON.stringify(e))}static deleteById(e){g.checkFolderandFiles();let t=g.getAll();for(let r=0;r<t.length;r++)t[r]._id===e&&t.splice(r,1);i.writeFileSync(n.join(a.globalStorageUri.fsPath.toString(),"categories.json"),JSON.stringify(t)),d.getAll().forEach((function(t){t._categoryId===e&&(t._categoryId=0,t.save())}))}getNextId(){let e=0;return g.getAll().forEach((function(t){t._id>e&&(e=t._id)})),e+1}static getTreeStrings(){let e=g.getAll(),t=[];return e.forEach((function(r){let o=g.createArrowName(r,e);t.push(new h(o,r._id))})),t}static createArrowName(e,t){let r=e._name;return 0!==e._parentId&&t.forEach((function(o){o._id===e._parentId&&(r=0!==o._parentId?g.createArrowName(o,t)+" < "+r:o._name+" < "+r)})),r}static makeTree(e){const t=new Map(e.map((e=>[e._id,e]))),r={};return e.forEach(((e,o)=>{const i=t.get(e._parentId)??r;(i.children??(i.children=[])).push(e)})),r.children??[]}static getTreeItemsWithProjects(){let e=g.makeTree(g.getAll()),t=[];return e.forEach((function(e){t.push(g.createTreeItem(e))})),d.getAllByCategoryId(0).forEach((function(e){t.push(new l(e._name,void 0,e))})),t}static createTreeItem(e){let t=[];return void 0!==e.children&&e.children.forEach((function(e){t.push(g.createTreeItem(e))})),d.getAllByCategoryId(e._id).forEach((function(e){t.push(new l(e._name,void 0,e))})),new l(e._name,t,void 0,e)}static getAll(){return g.checkFolderandFiles(),JSON.parse(i.readFileSync(n.join(a.globalStorageUri.fsPath.toString(),"categories.json")).toString())}static getOneById(e){let t=g.getAll(),r=null;return t.forEach((function(t){t._id===e&&(r=t)})),r}static checkFolderandFiles(){i.existsSync(a.globalStorageUri.fsPath.toString())||i.mkdirSync(a.globalStorageUri.fsPath.toString()),i.existsSync(n.join(a.globalStorageUri.fsPath.toString(),"categories.json"))||i.writeFileSync(n.join(a.globalStorageUri.fsPath.toString(),"categories.json"),JSON.stringify([]))}}class h{constructor(e,t){this._string=e,this._catId=t}}})(),module.exports=o})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "vscode":
+/*!*************************!*\
+  !*** external "vscode" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("vscode");
+
+/***/ }),
+
+/***/ "fs":
+/*!*********************!*\
+  !*** external "fs" ***!
+  \*********************/
+/***/ ((module) => {
+
+module.exports = require("fs");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+module.exports = require("path");
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+var exports = __webpack_exports__;
+/*!**************************!*\
+  !*** ./src/extension.ts ***!
+  \**************************/
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.deactivate = exports.activate = void 0;
+const vscode = __webpack_require__(/*! vscode */ "vscode");
+const fs = __webpack_require__(/*! fs */ "fs");
+const path = __webpack_require__(/*! path */ "path");
+let extensionContext;
+let treeDataProvider;
+function activate(context) {
+    extensionContext = context;
+    treeDataProvider = new TreeDataProvider();
+    vscode.window.registerTreeDataProvider('projectManagerTreeView', treeDataProvider);
+    vscode.commands.registerCommand('vscode-project-manager.addProject', () => {
+        createProjectEntry();
+    });
+    vscode.commands.registerCommand('vscode-project-manager.editEntry', (item) => {
+        if (item.project === undefined && item.category !== undefined) {
+            // edit category
+            editCategoryEntry(item.category._id);
+        }
+        else if (item.project !== undefined && item.category === undefined) {
+            // edit project
+            editProjectEntry(item.project._id);
+        }
+    });
+    vscode.commands.registerCommand('vscode-project-manager.deleteEntry', (item) => {
+        vscode.window.showInformationMessage("You realy want to delete this?", "Yes", "No").then(answer => {
+            if (answer === "Yes") {
+                if (item.project === undefined && item.category !== undefined) {
+                    // delete category
+                    Category.deleteById(item.category._id);
+                }
+                else if (item.project !== undefined && item.category === undefined) {
+                    // delete project
+                    Project.deleteById(item.project._id);
+                }
+                treeDataProvider.refresh();
+            }
+        });
+    });
+    vscode.commands.registerCommand('vscode-project-manager.addCategory', () => {
+        createCategoryEntry();
+    });
+    vscode.commands.registerCommand('vscode-project-manager.openInNewWindow', (item) => {
+        let projectPathUri = vscode.Uri.file(item.project._path);
+        vscode.commands.executeCommand('vscode.openFolder', projectPathUri, {
+            forceNewWindow: true
+        });
+    });
+    vscode.commands.registerCommand('vscode-project-manager.openInWindow', (project) => {
+        let projectObj = Project.getOneById(project);
+        if (projectObj !== null) {
+            let uri = vscode.Uri.file(projectObj._path);
+            vscode.commands.executeCommand('vscode.openFolder', uri);
+        }
+    });
+}
+exports.activate = activate;
+async function createProjectEntry() {
+    if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders?.length > 0) {
+        const projectNameInput = await vscode.window.showInputBox({
+            placeHolder: 'Name',
+            prompt: 'Please enter a name for the project that is shown in the sidebar'
+        });
+        if (projectNameInput !== undefined) {
+            if (projectNameInput === '') {
+                vscode.window.showErrorMessage('A name for the project is required.');
+                return;
+            }
+            let treeStrings = Category.getTreeStrings();
+            let quickpickOptions = ['No one'];
+            treeStrings.forEach(function (value) {
+                quickpickOptions.push(value._string);
+            });
+            const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
+                title: 'Enter a category name or leave it empty for no category'
+            });
+            // check which parent cat is selected
+            let parentCatId = 0;
+            treeStrings.forEach(function (value) {
+                if (value._string === parentCategoryInput) {
+                    parentCatId = value._catId;
+                }
+            });
+            // get workspace opened folders
+            let projectPaths = Array();
+            vscode.workspace.workspaceFolders?.forEach(function (value) {
+                projectPaths.push(value.uri.fsPath.toString());
+            });
+            let projectPath = projectPaths[0];
+            let projectEntry = new Project(projectPath, projectNameInput, parentCatId);
+            projectEntry.save();
+            treeDataProvider.refresh();
+        }
+    }
+    else {
+        vscode.window.showErrorMessage('One folder must been added to current workspace to save it.');
+    }
+}
+async function editCategoryEntry(categoryId) {
+    let category = Category.getOneById(categoryId);
+    if (category !== null) {
+        const categoryNameInput = await vscode.window.showInputBox({
+            placeHolder: 'Name',
+            prompt: 'Please enter a name for the category that is shown in the sidebar',
+            value: category?._name
+        });
+        if (categoryNameInput !== undefined) {
+            if (categoryNameInput === '') {
+                vscode.window.showErrorMessage('A name for the category is required.');
+                return;
+            }
+            let treeStrings = Category.getTreeStrings();
+            let quickpickOptions = ['No one'];
+            treeStrings.forEach(function (value) {
+                if (value._catId !== categoryId) {
+                    quickpickOptions.push(value._string);
+                }
+            });
+            const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
+                title: 'Select a parent category or No one for a root category'
+            });
+            // check which parent cat is selected
+            let parentCatId = 0;
+            treeStrings.forEach(function (value) {
+                if (value._string === parentCategoryInput) {
+                    parentCatId = value._catId;
+                }
+            });
+            let categoryEntry = new Category(categoryNameInput, parentCatId);
+            categoryEntry._id = category._id;
+            categoryEntry.save();
+            treeDataProvider.refresh();
+        }
+    }
+}
+async function editProjectEntry(projectId) {
+    let project = Project.getOneById(projectId);
+    if (project !== null) {
+        const projectNameInput = await vscode.window.showInputBox({
+            placeHolder: 'Name',
+            prompt: 'Please enter a name for the project that is shown in the sidebar',
+            value: project._name
+        });
+        if (projectNameInput !== undefined) {
+            if (projectNameInput === '') {
+                vscode.window.showErrorMessage('A name for the project is required.');
+                return;
+            }
+            let treeStrings = Category.getTreeStrings();
+            let quickpickOptions = ['No one'];
+            treeStrings.forEach(function (value) {
+                quickpickOptions.push(value._string);
+            });
+            const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
+                title: 'Enter a category name or leave it empty for no category'
+            });
+            // check which parent cat is selected
+            let parentCatId = 0;
+            treeStrings.forEach(function (value) {
+                if (value._string === parentCategoryInput) {
+                    parentCatId = value._catId;
+                }
+            });
+            // get workspace opened folders
+            let projectPaths = Array();
+            vscode.workspace.workspaceFolders?.forEach(function (value) {
+                projectPaths.push(value.uri.fsPath.toString());
+            });
+            let projectPath = projectPaths[0];
+            let editProject = new Project(projectPath, projectNameInput, parentCatId);
+            editProject._id = project._id;
+            editProject.save();
+            treeDataProvider.refresh();
+        }
+    }
+}
+async function createCategoryEntry() {
+    const categoryNameInput = await vscode.window.showInputBox({
+        placeHolder: 'Name',
+        prompt: 'Please enter a name for the category that is shown in the sidebar'
+    });
+    if (categoryNameInput !== undefined) {
+        if (categoryNameInput === '') {
+            vscode.window.showErrorMessage('A name for the category is required.');
+            return;
+        }
+        let treeStrings = Category.getTreeStrings();
+        let quickpickOptions = ['No one'];
+        treeStrings.forEach(function (value) {
+            quickpickOptions.push(value._string);
+        });
+        const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
+            title: 'Select a parent category or No one for a root category'
+        });
+        // check which parent cat is selected
+        let parentCatId = 0;
+        treeStrings.forEach(function (value) {
+            if (value._string === parentCategoryInput) {
+                parentCatId = value._catId;
+            }
+        });
+        let categoryEntry = new Category(categoryNameInput, parentCatId);
+        categoryEntry.save();
+        treeDataProvider.refresh();
+    }
+}
+function deactivate() { }
+exports.deactivate = deactivate;
+class TreeDataProvider {
+    constructor() {
+        this._onDidChangeTreeData = new vscode.EventEmitter();
+        this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+        this.data = Category.getTreeItemsWithProjects();
+    }
+    refresh() {
+        this.data = Category.getTreeItemsWithProjects();
+        this._onDidChangeTreeData.fire();
+    }
+    getTreeItem(element) {
+        return element;
+    }
+    getChildren(element) {
+        if (element === undefined) {
+            return this.data;
+        }
+        return element.children;
+    }
+}
+class TreeItem extends vscode.TreeItem {
+    constructor(label, children, project, category) {
+        super(label, children === undefined ? vscode.TreeItemCollapsibleState.None :
+            vscode.TreeItemCollapsibleState.Expanded);
+        this.children = children;
+        this.project = project;
+        this.category = category;
+        if (this.project === undefined) {
+            this.iconPath = new vscode.ThemeIcon("layers");
+            this.contextValue = 'TreeItemCategory';
+        }
+        else {
+            this.iconPath = new vscode.ThemeIcon("folder");
+            this.contextValue = 'TreeItemProject';
+            this.command = {
+                command: 'vscode-project-manager.openInWindow',
+                title: 'openInWindow',
+                arguments: [this.project?._id]
+            };
+        }
+    }
+}
+class Project {
+    constructor(path, name, categoryId = 0) {
+        this._id = this.getNextId();
+        this._path = path;
+        this._name = name;
+        this._categoryId = categoryId;
+    }
+    getNextId() {
+        let latestId = 0;
+        const existingProjects = Project.getAll();
+        existingProjects.forEach(function (value) {
+            if (value._id > latestId) {
+                latestId = value._id;
+            }
+        });
+        return latestId + 1;
+    }
+    save() {
+        // check if folders and files exist
+        Project.checkFolderandFiles();
+        // read projects.json and add the project
+        let existingProjects = Project.getAll();
+        for (let i = 0; i < existingProjects.length; i++) {
+            if (this._id === existingProjects[i]._id) {
+                existingProjects.splice(i, 1);
+            }
+        }
+        existingProjects.push(this);
+        // write data to projects.json
+        fs.writeFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'projects.json'), JSON.stringify(existingProjects));
+    }
+    static deleteById(projectId) {
+        // check if folders and files exist
+        Project.checkFolderandFiles();
+        // read projects.json and add the project
+        let existingProjects = Project.getAll();
+        for (let i = 0; i < existingProjects.length; i++) {
+            if (existingProjects[i]._id === projectId) {
+                existingProjects.splice(i, 1);
+            }
+        }
+        // write data to projects.json
+        fs.writeFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'projects.json'), JSON.stringify(existingProjects));
+    }
+    static getOneById(projectId) {
+        let projects = Project.getAll();
+        let searchedProject = null;
+        projects.forEach(function (value) {
+            if (value._id === projectId) {
+                searchedProject = value;
+            }
+        });
+        return searchedProject;
+    }
+    static getAllByCategoryId(catId) {
+        let projects = Project.getAll();
+        let projectsByCat = [];
+        projects.forEach(function (value) {
+            if (value._categoryId === catId) {
+                projectsByCat.push(value);
+            }
+        });
+        return projectsByCat;
+    }
+    static getAll() {
+        // check if folders and files exist
+        Project.checkFolderandFiles();
+        let existingProjects = JSON.parse(fs.readFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'projects.json')).toString());
+        return existingProjects;
+    }
+    static checkFolderandFiles() {
+        // create extension global storage folder if not exist
+        if (!fs.existsSync(extensionContext.globalStorageUri.fsPath.toString())) {
+            fs.mkdirSync(extensionContext.globalStorageUri.fsPath.toString());
+        }
+        // check if projects file exist and if not create it
+        if (!fs.existsSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'projects.json'))) {
+            fs.writeFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'projects.json'), JSON.stringify([]));
+        }
+    }
+}
+class Category {
+    constructor(name, parentId) {
+        this._id = this.getNextId();
+        this._parentId = parentId;
+        this._name = name;
+        this.children = [];
+    }
+    save() {
+        // check if folders and files exist
+        Category.checkFolderandFiles();
+        // read categories.json and add the category
+        let existingCategories = Category.getAll();
+        for (let i = 0; i < existingCategories.length; i++) {
+            if (this._id === existingCategories[i]._id) {
+                existingCategories.splice(i, 1);
+            }
+        }
+        existingCategories.push(this);
+        // write data to categories.json
+        fs.writeFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'categories.json'), JSON.stringify(existingCategories));
+    }
+    static deleteById(categoryId) {
+        // check if folders and files exist
+        Category.checkFolderandFiles();
+        // read categories.json and remove the project
+        let existingCategories = Category.getAll();
+        for (let i = 0; i < existingCategories.length; i++) {
+            if (existingCategories[i]._id === categoryId) {
+                existingCategories.splice(i, 1);
+            }
+        }
+        // write data to projects.json
+        fs.writeFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'categories.json'), JSON.stringify(existingCategories));
+        // change projects category id if the current id is the deleted id
+        let existingProjects = Project.getAll();
+        existingProjects.forEach(function (value) {
+            if (value._categoryId === categoryId) {
+                value._categoryId = 0;
+                value.save();
+            }
+        });
+    }
+    getNextId() {
+        let latestId = 0;
+        const existingCategories = Category.getAll();
+        existingCategories.forEach(function (value) {
+            if (value._id > latestId) {
+                latestId = value._id;
+            }
+        });
+        return latestId + 1;
+    }
+    static getTreeStrings() {
+        let categories = Category.getAll();
+        let strings = [];
+        categories.forEach(function (value) {
+            let arrowname = Category.createArrowName(value, categories);
+            strings.push(new TreeString(arrowname, value._id));
+        });
+        return strings;
+    }
+    static createArrowName(category, categories) {
+        let arrowname = category._name;
+        if (category._parentId !== 0) {
+            categories.forEach(function (value) {
+                if (value._id === category._parentId) {
+                    if (value._parentId !== 0) {
+                        arrowname = Category.createArrowName(value, categories) + ' < ' + arrowname;
+                    }
+                    else {
+                        arrowname = value._name + ' < ' + arrowname;
+                    }
+                }
+            });
+        }
+        return arrowname;
+    }
+    static makeTree(categoryNodes) {
+        const nodesMap = new Map(categoryNodes.map(node => [node._id, node]));
+        const virtualRoot = {};
+        categoryNodes.forEach((node, i) => {
+            const parent = nodesMap.get(node._parentId) ?? virtualRoot;
+            (parent.children ?? (parent.children = [])).push(node);
+        });
+        return virtualRoot.children ?? [];
+    }
+    static getTreeItemsWithProjects() {
+        let catTree = Category.makeTree(Category.getAll());
+        let treeItems = [];
+        catTree.forEach(function (value) {
+            treeItems.push(Category.createTreeItem(value));
+        });
+        // add tree items where not in a category
+        let projects = Project.getAllByCategoryId(0);
+        projects.forEach(function (value) {
+            treeItems.push(new TreeItem(value._name, undefined, value));
+        });
+        return treeItems;
+    }
+    static createTreeItem(category) {
+        let children = [];
+        // add cat childs
+        if (category.children !== undefined) {
+            category.children.forEach(function (value) {
+                children.push(Category.createTreeItem(value));
+            });
+        }
+        // add project childs
+        let projects = Project.getAllByCategoryId(category._id);
+        projects.forEach(function (value) {
+            children.push(new TreeItem(value._name, undefined, value));
+        });
+        let treeItem = new TreeItem(category._name, children, undefined, category);
+        return treeItem;
+    }
+    static getAll() {
+        // check if folders and files exist
+        Category.checkFolderandFiles();
+        let existingCategories = JSON.parse(fs.readFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'categories.json')).toString());
+        return existingCategories;
+    }
+    static getOneById(categoryId) {
+        let categories = Category.getAll();
+        let searchedCategory = null;
+        categories.forEach(function (value) {
+            if (value._id === categoryId) {
+                searchedCategory = value;
+            }
+        });
+        return searchedCategory;
+    }
+    static checkFolderandFiles() {
+        // create extension global storage folder if not exist
+        if (!fs.existsSync(extensionContext.globalStorageUri.fsPath.toString())) {
+            fs.mkdirSync(extensionContext.globalStorageUri.fsPath.toString());
+        }
+        // check if projects file exist and if not create it
+        if (!fs.existsSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'categories.json'))) {
+            fs.writeFileSync(path.join(extensionContext.globalStorageUri.fsPath.toString(), 'categories.json'), JSON.stringify([]));
+        }
+    }
+}
+class TreeString {
+    constructor(string, catId) {
+        this._string = string;
+        this._catId = catId;
+    }
+}
+
+})();
+
+module.exports = __webpack_exports__;
+/******/ })()
+;
+//# sourceMappingURL=extension.js.map
