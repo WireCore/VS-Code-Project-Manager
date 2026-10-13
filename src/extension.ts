@@ -10,13 +10,13 @@ export function activate(context: vscode.ExtensionContext) {
 	extensionContext = context;
 	treeDataProvider = new TreeDataProvider();
 
-	vscode.window.registerTreeDataProvider('projectManagerTreeView', treeDataProvider);
+	context.subscriptions.push(vscode.window.registerTreeDataProvider('projectManagerTreeView', treeDataProvider));
 
-	vscode.commands.registerCommand('vscode-project-manager.addProject', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.addProject', () => {
 		createProjectEntry();
-	});
+	}));
 
-	vscode.commands.registerCommand('vscode-project-manager.editEntry', (item) => {
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.editEntry', (item) => {
 		
 		if(item.project === undefined && item.category !== undefined){
 			// edit category
@@ -26,11 +26,11 @@ export function activate(context: vscode.ExtensionContext) {
 			editProjectEntry(item.project._id);
 		}
 
-	});
+	}));
 
-	vscode.commands.registerCommand('vscode-project-manager.deleteEntry', (item) => {
-		
-		vscode.window.showInformationMessage("You realy want to delete this?", "Yes", "No").then(answer => {
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.deleteEntry', (item) => {
+
+		vscode.window.showWarningMessage("Do you really want to delete this?", { modal: true }, "Yes").then(answer => {
 			if (answer === "Yes") {
 				if(item.project === undefined && item.category !== undefined){
 					// delete category
@@ -43,22 +43,22 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		});
 
-	});
+	}));
 
-	vscode.commands.registerCommand('vscode-project-manager.addCategory', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.addCategory', () => {
 		createCategoryEntry();
-	});
+	}));
 
-	vscode.commands.registerCommand('vscode-project-manager.openInNewWindow', (item) => {
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.openInNewWindow', (item) => {
 		
 		let projectPathUri = vscode.Uri.file(item.project._path);
 		vscode.commands.executeCommand('vscode.openFolder', projectPathUri, {
 			forceNewWindow: true
 		});
 
-	});
+	}));
 
-	vscode.commands.registerCommand('vscode-project-manager.openInWindow', (project) => {
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.openInWindow', (project) => {
 		
 		let projectObj = Project.getOneById(project);
 
@@ -69,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		}
 
-	});
+	}));
 
 }
 
@@ -217,14 +217,7 @@ async function editProjectEntry(projectId:number){
 				}
 			});
 	
-			// get workspace opened folders
-			let projectPaths = Array<string>();
-			vscode.workspace.workspaceFolders?.forEach(function(value){
-				projectPaths.push(value.uri.fsPath.toString());
-			});
-			let projectPath = projectPaths[0];
-			
-			let editProject = new Project(projectPath, projectNameInput, parentCatId);
+			let editProject = new Project(project._path, projectNameInput, parentCatId);
 			editProject._id = project._id;
 			editProject.save();
 
