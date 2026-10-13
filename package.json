@@ -2,10 +2,10 @@
   "name": "vscode-project-manager",
   "displayName": "Project Manager",
   "description": "Switch between projects.",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "publisher": "WireCore",
   "engines": {
-    "vscode": "^1.69.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
@@ -29,45 +29,67 @@
     "type": "git",
     "url": "https://github.com/WireCore/VS-Code-Project-Manager.git"
   },
-  "activationEvents": [
-    "onView:projectManagerTreeView"
-  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "vscode-project-manager.addProject",
         "title": "Add Project",
-        "icon": "$(new-folder)"
+        "category": "Project Manager",
+        "icon": "$(repo-create)"
       },
       {
         "command": "vscode-project-manager.addCategory",
         "title": "Add Category",
-        "icon": "$(layers-dot)"
+        "category": "Project Manager",
+        "icon": "$(new-folder)"
       },
       {
-        "command": "vscode-project-manager.editEntry",
-        "title": "Edit",
-        "args": "item"
+        "command": "vscode-project-manager.renameEntry",
+        "title": "Rename",
+        "category": "Project Manager"
       },
       {
         "command": "vscode-project-manager.deleteEntry",
         "title": "Delete",
-        "args": "item"
+        "category": "Project Manager"
       },
       {
         "command": "vscode-project-manager.openInWindow",
-        "title": "openInWindow",
-        "args": "project"
+        "title": "Open In Window",
+        "category": "Project Manager"
       },
       {
         "command": "vscode-project-manager.openInNewWindow",
         "title": "Open In New Window",
-        "args": "project",
+        "category": "Project Manager",
         "icon": "$(link-external)"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "vscode-project-manager.renameEntry",
+          "when": "false"
+        },
+        {
+          "command": "vscode-project-manager.deleteEntry",
+          "when": "false"
+        },
+        {
+          "command": "vscode-project-manager.openInWindow",
+          "when": "false"
+        },
+        {
+          "command": "vscode-project-manager.openInNewWindow",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "vscode-project-manager.addProject",
@@ -87,12 +109,24 @@
           "group": "inline"
         },
         {
-          "command": "vscode-project-manager.editEntry",
-          "when": "view == projectManagerTreeView"
+          "command": "vscode-project-manager.addProject",
+          "when": "view == projectManagerTreeView && viewItem == TreeItemCategory",
+          "group": "inline@1"
+        },
+        {
+          "command": "vscode-project-manager.addCategory",
+          "when": "view == projectManagerTreeView && viewItem == TreeItemCategory",
+          "group": "inline@2"
+        },
+        {
+          "command": "vscode-project-manager.renameEntry",
+          "when": "view == projectManagerTreeView",
+          "group": "1_modify"
         },
         {
           "command": "vscode-project-manager.deleteEntry",
-          "when": "view == projectManagerTreeView"
+          "when": "view == projectManagerTreeView",
+          "group": "9_delete"
         }
       ]
     },
@@ -100,7 +134,7 @@
       "wirecore-project-manager": [
         {
           "id": "projectManagerTreeView",
-          "name": "projectManagerTreeView",
+          "name": "Projects",
           "contextualTitle": "Project Manager"
         }
       ]
@@ -110,37 +144,33 @@
         {
           "id": "wirecore-project-manager",
           "title": "Project Manager",
-          "icon": "$(folder)"
+          "icon": "$(folder-library)"
         }
       ]
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "webpack": "webpack --mode development",
-    "webpack-dev": "webpack --mode development --watch",
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
-    "test-compile": "tsc -p ./"
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
-    "@types/mocha": "^9.1.1",
-    "@types/node": "16.x",
-    "@types/vscode": "^1.69.0",
-    "@typescript-eslint/eslint-plugin": "^5.31.0",
-    "@typescript-eslint/parser": "^5.31.0",
-    "@vscode/test-electron": "^2.1.5",
-    "eslint": "^8.20.0",
-    "glob": "^8.0.3",
-    "mocha": "^10.0.0",
-    "ts-loader": "^9.4.2",
-    "typescript": "^4.7.4",
-    "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1"
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "~1.90.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
+    "eslint": "^10.12.0",
+    "ts-loader": "^9.6.2",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "webpack": "^5.111.1",
+    "webpack-cli": "^7.2.3"
   }
 }
