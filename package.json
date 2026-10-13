@@ -29,45 +29,62 @@
     "type": "git",
     "url": "https://github.com/WireCore/VS-Code-Project-Manager.git"
   },
-  "activationEvents": [
-    "onView:projectManagerTreeView"
-  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "vscode-project-manager.addProject",
         "title": "Add Project",
+        "category": "Project Manager",
         "icon": "$(new-folder)"
       },
       {
         "command": "vscode-project-manager.addCategory",
         "title": "Add Category",
+        "category": "Project Manager",
         "icon": "$(layers-dot)"
       },
       {
         "command": "vscode-project-manager.editEntry",
         "title": "Edit",
-        "args": "item"
+        "category": "Project Manager"
       },
       {
         "command": "vscode-project-manager.deleteEntry",
         "title": "Delete",
-        "args": "item"
+        "category": "Project Manager"
       },
       {
         "command": "vscode-project-manager.openInWindow",
-        "title": "openInWindow",
-        "args": "project"
+        "title": "Open In Window",
+        "category": "Project Manager"
       },
       {
         "command": "vscode-project-manager.openInNewWindow",
         "title": "Open In New Window",
-        "args": "project",
+        "category": "Project Manager",
         "icon": "$(link-external)"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "vscode-project-manager.editEntry",
+          "when": "false"
+        },
+        {
+          "command": "vscode-project-manager.deleteEntry",
+          "when": "false"
+        },
+        {
+          "command": "vscode-project-manager.openInWindow",
+          "when": "false"
+        },
+        {
+          "command": "vscode-project-manager.openInNewWindow",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "vscode-project-manager.addProject",
@@ -100,7 +117,7 @@
       "wirecore-project-manager": [
         {
           "id": "projectManagerTreeView",
-          "name": "projectManagerTreeView",
+          "name": "Projects",
           "contextualTitle": "Project Manager"
         }
       ]
