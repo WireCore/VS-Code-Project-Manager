@@ -29,6 +29,11 @@
     "type": "git",
     "url": "https://github.com/WireCore/VS-Code-Project-Manager.git"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -36,17 +41,17 @@
         "command": "vscode-project-manager.addProject",
         "title": "Add Project",
         "category": "Project Manager",
-        "icon": "$(new-folder)"
+        "icon": "$(repo-create)"
       },
       {
         "command": "vscode-project-manager.addCategory",
         "title": "Add Category",
         "category": "Project Manager",
-        "icon": "$(layers-dot)"
+        "icon": "$(new-folder)"
       },
       {
-        "command": "vscode-project-manager.editEntry",
-        "title": "Edit",
+        "command": "vscode-project-manager.renameEntry",
+        "title": "Rename",
         "category": "Project Manager"
       },
       {
@@ -69,7 +74,7 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "vscode-project-manager.editEntry",
+          "command": "vscode-project-manager.renameEntry",
           "when": "false"
         },
         {
@@ -104,12 +109,24 @@
           "group": "inline"
         },
         {
-          "command": "vscode-project-manager.editEntry",
-          "when": "view == projectManagerTreeView"
+          "command": "vscode-project-manager.addProject",
+          "when": "view == projectManagerTreeView && viewItem == TreeItemCategory",
+          "group": "inline@1"
+        },
+        {
+          "command": "vscode-project-manager.addCategory",
+          "when": "view == projectManagerTreeView && viewItem == TreeItemCategory",
+          "group": "inline@2"
+        },
+        {
+          "command": "vscode-project-manager.renameEntry",
+          "when": "view == projectManagerTreeView",
+          "group": "1_modify"
         },
         {
           "command": "vscode-project-manager.deleteEntry",
-          "when": "view == projectManagerTreeView"
+          "when": "view == projectManagerTreeView",
+          "group": "9_delete"
         }
       ]
     },
@@ -127,7 +144,7 @@
         {
           "id": "wirecore-project-manager",
           "title": "Project Manager",
-          "icon": "$(folder)"
+          "icon": "$(folder-library)"
         }
       ]
     }

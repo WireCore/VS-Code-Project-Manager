@@ -3,7 +3,13 @@
 ## [2.0.0]
 
 - Requires VS Code 1.90 or newer
-- Editing a project no longer replaces its path with the currently opened folder
+- Move projects and categories via drag & drop
+- Add projects and categories directly inside a category via inline buttons
+- Projects are added by selecting a folder instead of using the opened workspace folder
+- "Edit" replaced by "Rename", which only changes the name
+- New icons
+- Declared support for Restricted Mode (untrusted workspaces)
+- Fixed: deleting a category that contains projects failed and hid those projects
 - Delete confirmation is now a modal dialog
 - Commands that need a selected entry are hidden from the Command Palette
 - Commands are grouped under "Project Manager" in the Command Palette

@@ -10,26 +10,34 @@ export function activate(context: vscode.ExtensionContext) {
 	extensionContext = context;
 	treeDataProvider = new TreeDataProvider();
 
-	context.subscriptions.push(vscode.window.registerTreeDataProvider('projectManagerTreeView', treeDataProvider));
-
-	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.addProject', () => {
-		createProjectEntry();
+	context.subscriptions.push(vscode.window.createTreeView('projectManagerTreeView', {
+		treeDataProvider: treeDataProvider,
+		dragAndDropController: new DragAndDropController()
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.editEntry', (item) => {
+	// item is undefined when called from the view title or the command palette
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.addProject', (item?: TreeItem) => {
+		createProjectEntry(item?.category?._id ?? 0);
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.addCategory', (item?: TreeItem) => {
+		createCategoryEntry(item?.category?._id ?? 0);
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.renameEntry', (item) => {
 		
 		if(item.project === undefined && item.category !== undefined){
-			// edit category
-			editCategoryEntry(item.category._id);
+			// rename category
+			renameCategoryEntry(item.category);
 		} else if(item.project !== undefined && item.category === undefined){
-			// edit project
-			editProjectEntry(item.project._id);
+			// rename project
+			renameProjectEntry(item.project);
 		}
 
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.deleteEntry', (item) => {
-
+		
 		vscode.window.showWarningMessage("Do you really want to delete this?", { modal: true }, "Yes").then(answer => {
 			if (answer === "Yes") {
 				if(item.project === undefined && item.category !== undefined){
@@ -43,10 +51,6 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		});
 
-	}));
-
-	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.addCategory', () => {
-		createCategoryEntry();
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('vscode-project-manager.openInNewWindow', (item) => {
@@ -73,195 +77,58 @@ export function activate(context: vscode.ExtensionContext) {
 
 }
 
-async function createProjectEntry(){
+async function askForName(prompt: string, value?: string){
 
-	if(vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders?.length > 0){
-
-		const projectNameInput = await vscode.window.showInputBox({
-			placeHolder: 'Name',
-			prompt: 'Please enter a name for the project that is shown in the sidebar'
-		});
-	
-		if(projectNameInput !== undefined){
-	
-			if(projectNameInput === ''){
-				vscode.window.showErrorMessage('A name for the project is required.');
-				return;
-			}
-	
-	
-			let treeStrings = Category.getTreeStrings();
-			let quickpickOptions:Array<string> = ['No one'];
-			treeStrings.forEach(function(value){
-				quickpickOptions.push(value._string);
-			});
-			
-			const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
-				title: 'Enter a category name or leave it empty for no category'
-			});
-	
-			// check which parent cat is selected
-			let parentCatId = 0;
-			treeStrings.forEach(function(value){
-				if(value._string === parentCategoryInput){
-					parentCatId = value._catId;
-				}
-			});
-	
-			// get workspace opened folders
-			let projectPaths = Array<string>();
-			vscode.workspace.workspaceFolders?.forEach(function(value){
-				projectPaths.push(value.uri.fsPath.toString());
-			});
-			let projectPath = projectPaths[0];
-			
-			let projectEntry = new Project(projectPath, projectNameInput, parentCatId);
-			projectEntry.save();
-	
-			treeDataProvider.refresh();
-	
-		}
-
-	} else {
-		vscode.window.showErrorMessage('One folder must been added to current workspace to save it.');
-	}
-
-}
-
-async function editCategoryEntry(categoryId:number){
-
-	let category:Category|null = Category.getOneById(categoryId);
-
-	if(category !== null){
-
-		const categoryNameInput = await vscode.window.showInputBox({
-			placeHolder: 'Name',
-			prompt: 'Please enter a name for the category that is shown in the sidebar',
-			value: category?._name
-		});
-	
-		if(categoryNameInput !== undefined){
-	
-			if(categoryNameInput === ''){
-				vscode.window.showErrorMessage('A name for the category is required.');
-				return;
-			}
-	
-			let treeStrings = Category.getTreeStrings();
-			let quickpickOptions:Array<string> = ['No one'];
-			treeStrings.forEach(function(value){
-				if(value._catId !== categoryId){
-					quickpickOptions.push(value._string);
-				}
-			});
-	
-			const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
-				title: 'Select a parent category or No one for a root category'
-			});
-	
-			// check which parent cat is selected
-			let parentCatId = 0;
-			treeStrings.forEach(function(value){
-				if(value._string === parentCategoryInput){
-					parentCatId = value._catId;
-				}
-			});
-			
-			let categoryEntry = new Category(categoryNameInput, parentCatId);
-			categoryEntry._id = category._id;
-			categoryEntry.save();
-
-			treeDataProvider.refresh();
-	
-		}
-
-	}
-
-}
-
-async function editProjectEntry(projectId:number){
-
-	let project:Project|null = Project.getOneById(projectId);
-
-	if(project !== null){
-
-		const projectNameInput = await vscode.window.showInputBox({
-			placeHolder: 'Name',
-			prompt: 'Please enter a name for the project that is shown in the sidebar',
-			value: project._name
-		});
-
-		if(projectNameInput !== undefined){
-
-			if(projectNameInput === ''){
-				vscode.window.showErrorMessage('A name for the project is required.');
-				return;
-			}
-	
-	
-			let treeStrings = Category.getTreeStrings();
-			let quickpickOptions:Array<string> = ['No one'];
-			treeStrings.forEach(function(value){
-				quickpickOptions.push(value._string);
-			});
-			
-			const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
-				title: 'Enter a category name or leave it empty for no category'
-			});
-	
-			// check which parent cat is selected
-			let parentCatId = 0;
-			treeStrings.forEach(function(value){
-				if(value._string === parentCategoryInput){
-					parentCatId = value._catId;
-				}
-			});
-	
-			let editProject = new Project(project._path, projectNameInput, parentCatId);
-			editProject._id = project._id;
-			editProject.save();
-
-			treeDataProvider.refresh();
-	
-		}
-
-	}
-
-}
-
-async function createCategoryEntry(){
-
-	const categoryNameInput = await vscode.window.showInputBox({
+	const nameInput = await vscode.window.showInputBox({
 		placeHolder: 'Name',
-		prompt: 'Please enter a name for the category that is shown in the sidebar'
+		prompt: prompt,
+		value: value
 	});
+
+	if(nameInput === ''){
+		vscode.window.showErrorMessage('A name is required.');
+		return undefined;
+	}
+
+	return nameInput;
+
+}
+
+async function createProjectEntry(categoryId: number){
+
+	const folders = await vscode.window.showOpenDialog({
+		canSelectFiles: false,
+		canSelectFolders: true,
+		canSelectMany: false,
+		defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri,
+		openLabel: 'Select Project Folder'
+	});
+
+	if(folders === undefined){
+		return;
+	}
+
+	const projectPath = folders[0].fsPath;
+	const projectNameInput = await askForName('Please enter a name for the project that is shown in the sidebar', path.basename(projectPath));
+
+	if(projectNameInput !== undefined){
+
+		let projectEntry = new Project(projectPath, projectNameInput, categoryId);
+		projectEntry.save();
+
+		treeDataProvider.refresh();
+
+	}
+
+}
+
+async function createCategoryEntry(parentId: number){
+
+	const categoryNameInput = await askForName('Please enter a name for the category that is shown in the sidebar');
 
 	if(categoryNameInput !== undefined){
 
-		if(categoryNameInput === ''){
-			vscode.window.showErrorMessage('A name for the category is required.');
-			return;
-		}
-
-		let treeStrings = Category.getTreeStrings();
-		let quickpickOptions:Array<string> = ['No one'];
-		treeStrings.forEach(function(value){
-			quickpickOptions.push(value._string);
-		});
-
-		const parentCategoryInput = await vscode.window.showQuickPick(quickpickOptions, {
-			title: 'Select a parent category or No one for a root category'
-		});
-
-		// check which parent cat is selected
-		let parentCatId = 0;
-		treeStrings.forEach(function(value){
-			if(value._string === parentCategoryInput){
-				parentCatId = value._catId;
-			}
-		});
-		
-		let categoryEntry = new Category(categoryNameInput, parentCatId);
+		let categoryEntry = new Category(categoryNameInput, parentId);
 		categoryEntry.save();
 
 		treeDataProvider.refresh();
@@ -270,7 +137,54 @@ async function createCategoryEntry(){
 
 }
 
+async function renameProjectEntry(project: Project){
+
+	const projectNameInput = await askForName('Please enter a new name for the project', project._name);
+
+	if(projectNameInput !== undefined){
+
+		let renamedProject = new Project(project._path, projectNameInput, project._categoryId);
+		renamedProject._id = project._id;
+		renamedProject.save();
+
+		treeDataProvider.refresh();
+
+	}
+
+}
+
+async function renameCategoryEntry(category: Category){
+
+	const categoryNameInput = await askForName('Please enter a new name for the category', category._name);
+
+	if(categoryNameInput !== undefined){
+
+		let renamedCategory = new Category(categoryNameInput, category._parentId);
+		renamedCategory._id = category._id;
+		renamedCategory.save();
+
+		treeDataProvider.refresh();
+
+	}
+
+}
+
 export function deactivate() {}
+
+// true if categoryId is ancestorId itself or lies somewhere below it
+export function isSameOrDescendant(categories: Array<{ _id: number, _parentId: number }>, categoryId: number, ancestorId: number): boolean {
+
+	let currentId = categoryId;
+	while(currentId !== 0){
+		if(currentId === ancestorId){
+			return true;
+		}
+		currentId = categories.find(value => value._id === currentId)?._parentId ?? 0;
+	}
+
+	return false;
+
+}
 
 class TreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	
@@ -300,6 +214,44 @@ class TreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	}
 
 }
+
+class DragAndDropController implements vscode.TreeDragAndDropController<TreeItem> {
+
+	private static readonly mimeType = 'application/vnd.code.tree.projectmanagertreeview';
+	readonly dragMimeTypes = [DragAndDropController.mimeType];
+	readonly dropMimeTypes = [DragAndDropController.mimeType];
+
+	handleDrag(source: readonly TreeItem[], dataTransfer: vscode.DataTransfer): void {
+		dataTransfer.set(DragAndDropController.mimeType, new vscode.DataTransferItem(source));
+	}
+
+	handleDrop(target: TreeItem | undefined, dataTransfer: vscode.DataTransfer): void {
+
+		const items: readonly TreeItem[] | undefined = dataTransfer.get(DragAndDropController.mimeType)?.value;
+		if(items === undefined){
+			return;
+		}
+
+		// dropping on a project moves into that project's category, dropping on empty space moves to root
+		const targetCategoryId = target?.category?._id ?? target?.project?._categoryId ?? 0;
+
+		items.forEach(function(item){
+			if(item.project !== undefined){
+				let movedProject = new Project(item.project._path, item.project._name, targetCategoryId);
+				movedProject._id = item.project._id;
+				movedProject.save();
+			} else if(item.category !== undefined && !isSameOrDescendant(Category.getAll(), targetCategoryId, item.category._id)){
+				let movedCategory = new Category(item.category._name, targetCategoryId);
+				movedCategory._id = item.category._id;
+				movedCategory.save();
+			}
+		});
+
+		treeDataProvider.refresh();
+
+	}
+
+}
   
 class TreeItem extends vscode.TreeItem {
 	
@@ -318,10 +270,10 @@ class TreeItem extends vscode.TreeItem {
 		this.category = category;
 		
 		if(this.project === undefined){
-			this.iconPath = new vscode.ThemeIcon("layers");
+			this.iconPath = new vscode.ThemeIcon("folder");
 			this.contextValue = 'TreeItemCategory';
 		} else {
-			this.iconPath = new vscode.ThemeIcon("folder");
+			this.iconPath = new vscode.ThemeIcon("repo");
 			this.contextValue = 'TreeItemProject';
 			this.command = {
 				command: 'vscode-project-manager.openInWindow',
@@ -520,8 +472,9 @@ class Category {
 		let existingProjects:Array<Project> = Project.getAll();
 		existingProjects.forEach(function(value){
 			if(value._categoryId === categoryId){
-				value._categoryId = 0;
-				value.save();
+				let movedProject = new Project(value._path, value._name, 0);
+				movedProject._id = value._id;
+				movedProject.save();
 			}
 		});
 
@@ -538,39 +491,6 @@ class Category {
 		});
 
 		return latestId + 1;
-
-	}
-
-	public static getTreeStrings():Array<TreeString>{
-
-		let categories = Category.getAll();
-		
-		let strings:Array<TreeString> = [];
-		categories.forEach(function(value){
-			let arrowname = Category.createArrowName(value, categories);
-			strings.push(new TreeString(arrowname, value._id));
-		});
-
-		return strings;
-
-	}
-
-	private static createArrowName(category:Category, categories:Array<Category>){
-
-		let arrowname = category._name;
-		if(category._parentId !== 0){
-			categories.forEach(function(value){
-				if(value._id === category._parentId){
-					if(value._parentId !== 0){
-						arrowname = Category.createArrowName(value, categories) + ' < ' + arrowname;
-					} else {
-						arrowname = value._name + ' < ' + arrowname;
-					}
-				}
-			});
-		}
-
-		return arrowname;
 
 	}
 
@@ -664,18 +584,6 @@ class Category {
 				JSON.stringify([]));
 		}
 
-	}
-
-}
-
-class TreeString {
-
-	_string: string;
-	_catId: number;
-
-	constructor(string: string, catId: number){
-		this._string = string;
-		this._catId = catId;
 	}
 
 }
